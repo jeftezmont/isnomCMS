@@ -14,6 +14,8 @@ final class BackupService
         'media',
         'site_settings',
         'nav_links',
+        'podcasts',
+        'podcast_episodes',
     ];
 
     public function __construct(private PDO $pdo, private array $config = [])

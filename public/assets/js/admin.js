@@ -221,6 +221,39 @@ document.querySelectorAll('[data-list-editor]').forEach((editor) => {
   });
 });
 
+document.querySelectorAll('[data-podcast-episode-form]').forEach((form) => {
+  const source = form.querySelector('[data-audio-source]');
+  const local = form.querySelector('[data-audio-local]');
+  const dropbox = form.querySelector('[data-audio-dropbox]');
+  const toggle = () => {
+    const isDropbox = source && source.value === 'dropbox';
+    if (local) local.hidden = isDropbox;
+    if (dropbox) dropbox.hidden = !isDropbox;
+  };
+  if (source) source.addEventListener('change', toggle);
+  toggle();
+
+  const validate = form.querySelector('[data-validate-dropbox]');
+  const input = form.querySelector('[data-dropbox-url]');
+  const status = form.querySelector('[data-dropbox-status]');
+  const csrf = form.querySelector('input[name="_csrf"]');
+  if (validate && input && status && csrf) validate.addEventListener('click', async () => {
+    validate.disabled = true;
+    status.textContent = 'Validando acceso, MIME y tamaño...';
+    const body = new URLSearchParams({ _csrf: csrf.value, url: input.value });
+    try {
+      const response = await fetch('/admin/podcast/audio/validate', { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json' }, body });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'URL no válida.');
+      status.textContent = `Audio válido: ${result.audio.mime_type}, ${result.audio.file_size} bytes. Apto para RSS.`;
+    } catch (error) {
+      status.textContent = error.message || 'No se pudo validar Dropbox.';
+    } finally {
+      validate.disabled = false;
+    }
+  });
+});
+
 const passkeySupported = window.PublicKeyCredential && navigator.credentials;
 
 function base64UrlToBuffer(value) {

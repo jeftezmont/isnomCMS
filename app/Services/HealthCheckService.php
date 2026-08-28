@@ -262,6 +262,8 @@ final class HealthCheckService
             $loaded = extension_loaded($extension);
             $checks[] = $this->check('php_ext_' . $extension, $extension, $loaded ? 'ok' : 'warning', $loaded ? $purpose . ' disponible.' : $purpose . ' no estará disponible.');
         }
+        $curl = extension_loaded('curl');
+        $checks[] = $this->check('php_ext_curl', 'curl', $curl ? 'ok' : 'warning', $curl ? 'Validación remota de Dropbox disponible.' : 'Dropbox no podrá validarse; el audio local seguirá funcionando.');
 
         $remoteAccess = filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN);
         $checks[] = $this->check('php_remote_access', 'allow_url_fopen', $remoteAccess ? 'ok' : 'warning', $remoteAccess ? 'Disponible para validar Turnstile.' : 'Turnstile no podrá validarse con el método actual.');

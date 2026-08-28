@@ -137,6 +137,62 @@ CREATE TABLE media (
   CONSTRAINT fk_media_user FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE podcasts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(220) NOT NULL,
+  slug VARCHAR(180) NOT NULL UNIQUE,
+  short_description VARCHAR(320) NOT NULL,
+  description MEDIUMTEXT NOT NULL,
+  author VARCHAR(190) NOT NULL,
+  owner_name VARCHAR(190) NOT NULL,
+  owner_email VARCHAR(190) NOT NULL,
+  language VARCHAR(20) NOT NULL DEFAULT 'es-MX',
+  category_primary VARCHAR(120) NOT NULL,
+  category_secondary VARCHAR(120) NULL,
+  copyright VARCHAR(255) NULL,
+  website_url VARCHAR(255) NULL,
+  cover_image VARCHAR(255) NOT NULL,
+  explicit TINYINT(1) NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  apple_podcasts_url VARCHAR(255) NULL,
+  spotify_url VARCHAR(255) NULL,
+  episodes_per_page SMALLINT UNSIGNED NOT NULL DEFAULT 9,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  INDEX idx_podcasts_active (active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE podcast_episodes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  podcast_id INT UNSIGNED NOT NULL,
+  title VARCHAR(220) NOT NULL,
+  slug VARCHAR(240) NOT NULL,
+  summary TEXT NOT NULL,
+  show_notes MEDIUMTEXT NOT NULL,
+  audio_source ENUM('local','dropbox') NOT NULL,
+  audio_local_path VARCHAR(255) NULL,
+  audio_original_url TEXT NULL,
+  audio_url TEXT NOT NULL,
+  audio_mime_type VARCHAR(80) NOT NULL,
+  audio_file_size BIGINT UNSIGNED NOT NULL,
+  duration VARCHAR(20) NULL,
+  image_url VARCHAR(255) NULL,
+  author VARCHAR(190) NULL,
+  episode_number INT UNSIGNED NULL,
+  season_number INT UNSIGNED NULL,
+  episode_type ENUM('full','trailer','bonus') NOT NULL DEFAULT 'full',
+  explicit TINYINT(1) NOT NULL DEFAULT 0,
+  status ENUM('draft','scheduled','published') NOT NULL DEFAULT 'draft',
+  published_at DATETIME NULL,
+  guid CHAR(36) NOT NULL UNIQUE,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_podcast_episode_slug (podcast_id, slug),
+  INDEX idx_podcast_episodes_listing (podcast_id, status, published_at),
+  INDEX idx_podcast_episodes_status (status, published_at),
+  CONSTRAINT fk_podcast_episodes_podcast FOREIGN KEY (podcast_id) REFERENCES podcasts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO categories (name, slug, description, created_at) VALUES
 ('Tecnología', 'tecnologia', 'Apple, hardware, herramientas y cultura tecnológica.', NOW()),
 ('Teología', 'teologia', 'Notas sobre fe, símbolos y esperanza.', NOW()),

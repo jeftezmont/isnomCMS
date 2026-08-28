@@ -32,6 +32,9 @@ return [
     'upload_dir' => __DIR__ . '/public/uploads',
     'upload_url' => '/uploads',
     'max_upload_bytes' => 8 * 1024 * 1024,
+    'max_audio_upload_bytes' => 250 * 1024 * 1024,
+    'audio_upload_dir' => __DIR__ . '/public/uploads/audio',
+    'audio_upload_url' => '/uploads/audio',
     'storage_dir' => __DIR__ . '/storage',
     'log_dir' => __DIR__ . '/storage/logs',
     'site' => [

@@ -27,6 +27,26 @@ Rediseño PHP/MySQL de `jeftezmont.me` con home editorial, blog dinámico y CMS 
 - Configuración y diagnóstico inicial: `/admin/setup`
 - Backups de contenido: `/admin/backups`
 - Checklist de deploy: `/admin/deploy`
+- Podcasts: `/admin/podcasts`
+- Episodios: `/admin/podcast-episodes`
+
+## Podcast
+
+El módulo usa tablas independientes (`podcasts` y `podcast_episodes`) y admite varios podcasts. Cada episodio puede usar un archivo local MP3/AAC/M4A o un enlace público de Dropbox validado mediante HTTPS, MIME, tamaño, redirecciones y reglas SSRF. El GUID se crea una vez al insertar y no se modifica al editar.
+
+Rutas públicas:
+
+- `/podcast`
+- `/podcast/{podcast}`
+- `/podcast/{podcast}/{episodio}`
+- `/podcast/feed.xml`
+- `/podcast/{podcast}/feed.xml`
+
+El feed RSS 2.0 incluye namespaces iTunes y Content, todos los episodios publicados, metadatos de Apple Podcasts/Spotify y `enclosure` con URL, MIME y longitud. El correo configurado como propietario puede quedar públicamente visible en el RSS.
+
+Para archivos grandes, ajusta en Hostinger `upload_max_filesize`, `post_max_size` y `max_execution_time` por encima de `max_audio_upload_bytes` (250 MB por defecto). PHP necesita `fileinfo` y `curl`; `zip` solo es necesario para backups ZIP. Apache sirve los archivos desde `public/uploads/audio/`, y debe conservar habilitadas las peticiones `HEAD` y `Range`. El `.htaccess` de uploads bloquea la ejecución de scripts y declara los MIME de audio.
+
+Configura la misma zona horaria en PHP y MySQL para que publicaciones programadas y fechas RFC 2822 del RSS coincidan. En Hostinger puede definirse `date.timezone = America/Mexico_City` desde las opciones de PHP.
 
 El editor acepta un formato Markdown ligero: títulos con `#`, `##`, `###`, negritas con `**texto**`, cursivas con `*texto*`, código inline con backticks, listas con `-`, citas con `>`, imágenes con `![texto](/uploads/imagen.webp)` y enlaces `[texto](https://url)`. Desde `/admin/posts/create` y `/admin/posts/{id}/edit` también hay toolbar, selector de medios y preview renderizado antes de publicar.
 

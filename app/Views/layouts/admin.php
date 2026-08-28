@@ -8,6 +8,8 @@ function admin_icon(string $name): string
         'folder' => '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.8a2 2 0 0 1-1.6-.8L9.4 3.8A2 2 0 0 0 7.8 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
         'tag' => '<path d="M12 2H2v10l9.3 9.3a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><path d="M7 7h.01"/>',
         'image' => '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+        'mic' => '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
+        'list-audio' => '<path d="M11 6h10"/><path d="M11 12h10"/><path d="M11 18h10"/><path d="M4 17v-6"/><circle cx="4" cy="19" r="2"/>',
         'user' => '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
         'key-round' => '<path d="M2 18v3h3l8.7-8.7"/><circle cx="16" cy="8" r="6"/><path d="M19.5 4.5 18 6"/><path d="m15 9 3-3"/>',
         'settings' => '<path d="M12.2 2h-.4a2 2 0 0 0-2 1.7l-.2 1.2a7.8 7.8 0 0 0-1.6.9L6.9 5.3a2 2 0 0 0-2.6.8l-.2.4a2 2 0 0 0 .4 2.7l.9.8a8 8 0 0 0 0 1.9l-.9.8a2 2 0 0 0-.4 2.7l.2.4a2 2 0 0 0 2.6.8l1.1-.5a7.8 7.8 0 0 0 1.6.9l.2 1.2a2 2 0 0 0 2 1.7h.4a2 2 0 0 0 2-1.7l.2-1.2a7.8 7.8 0 0 0 1.6-.9l1.1.5a2 2 0 0 0 2.6-.8l.2-.4a2 2 0 0 0-.4-2.7l-.9-.8a8 8 0 0 0 0-1.9l.9-.8a2 2 0 0 0 .4-2.7l-.2-.4a2 2 0 0 0-2.6-.8l-1.1.5a7.8 7.8 0 0 0-1.6-.9l-.2-1.2a2 2 0 0 0-2-1.7Z"/><circle cx="12" cy="12" r="3"/>',
@@ -57,6 +59,8 @@ function admin_icon(string $name): string
             <a class="nav-link <?= $path === '/admin' ? 'active' : '' ?>" href="/admin"><?= admin_icon('house') ?>Dashboard</a>
             <a class="nav-link <?= str_starts_with($path, '/admin/posts') && $path !== '/admin/posts/create' ? 'active' : '' ?>" href="/admin/posts"><?= admin_icon('file-text') ?>Artículos</a>
             <a class="nav-link <?= $path === '/admin/posts/create' ? 'active' : '' ?>" href="/admin/posts/create"><?= admin_icon('plus') ?>Nuevo artículo</a>
+            <a class="nav-link <?= str_starts_with($path, '/admin/podcasts') ? 'active' : '' ?>" href="/admin/podcasts"><?= admin_icon('mic') ?>Podcast</a>
+            <a class="nav-link <?= str_starts_with($path, '/admin/podcast-episodes') ? 'active' : '' ?>" href="/admin/podcast-episodes"><?= admin_icon('list-audio') ?>Episodios</a>
             <a class="nav-link <?= $path === '/admin/categories' ? 'active' : '' ?>" href="/admin/categories"><?= admin_icon('folder') ?>Categorías</a>
             <a class="nav-link <?= $path === '/admin/tags' ? 'active' : '' ?>" href="/admin/tags"><?= admin_icon('tag') ?>Etiquetas</a>
             <a class="nav-link <?= $path === '/admin/media' ? 'active' : '' ?>" href="/admin/media"><?= admin_icon('image') ?>Medios</a>

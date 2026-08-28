@@ -1,0 +1,3 @@
+<?php require APP_PATH . '/Views/public/partials.php'; ?>
+<main class="page-frame podcast-page"><header class="page-head"><span>/podcast</span><a href="/" class="brand-lockup small">jefté montenegro<br>computer engineer</a></header><div class="rule"></div>
+<section class="podcast-list"><h1>PODCAST</h1><?php foreach ($podcasts as $podcast): ?><article class="podcast-card"><img src="<?= e($podcast['cover_image']) ?>" alt=""><div><h2><a href="/podcast/<?= e($podcast['slug']) ?>"><?= e($podcast['name']) ?></a></h2><p><?= e($podcast['short_description']) ?></p></div></article><?php endforeach; ?><?php if (!$podcasts): ?><p>No hay podcasts activos.</p><?php endif; ?></section><?php site_footer($config); ?></main>
