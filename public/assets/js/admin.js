@@ -51,7 +51,12 @@ document.querySelectorAll('[data-content-editor]').forEach((textarea) => {
 document.querySelectorAll('[data-select-media]').forEach((button) => {
   button.addEventListener('click', () => {
     const input = document.querySelector('[data-featured-image]');
+    const preview = document.querySelector('[data-media-preview]');
     if (input) input.value = button.dataset.selectMedia;
+    if (preview) {
+      preview.src = button.dataset.selectMedia;
+      preview.hidden = false;
+    }
   });
 });
 

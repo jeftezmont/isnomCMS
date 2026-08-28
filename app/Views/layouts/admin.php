@@ -49,7 +49,7 @@ function admin_icon(string $name): string
         }
     </style>
     <?php endif; ?>
-    <script defer src="<?= asset('js/admin.js') ?>?v=30"></script>
+    <script defer src="<?= asset('js/admin.js') ?>?v=31"></script>
 </head>
 <body class="admin-shell">
     <aside class="admin-nav">
