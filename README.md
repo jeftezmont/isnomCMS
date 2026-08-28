@@ -48,6 +48,16 @@ Para archivos grandes, ajusta en Hostinger `upload_max_filesize`, `post_max_size
 
 Configura la misma zona horaria en PHP y MySQL para que publicaciones programadas y fechas RFC 2822 del RSS coincidan. En Hostinger puede definirse `date.timezone = America/Mexico_City` desde las opciones de PHP.
 
+La página individual del episodio utiliza un reproductor accesible en JavaScript vanilla sobre el `<audio>` real. La waveform acepta un futuro array precalculado de amplitudes y, cuando no existe, genera un fallback determinista a partir del GUID sin descargar ni decodificar el audio.
+
+Para cargar el podcast de demostración en un entorno local con FFmpeg disponible:
+
+```bash
+php scripts/seed_podcast_demo.php
+```
+
+El comando es idempotente: crea o actualiza exclusivamente `Conversaciones con sentido` y sus cinco episodios demo.
+
 El editor acepta un formato Markdown ligero: títulos con `#`, `##`, `###`, negritas con `**texto**`, cursivas con `*texto*`, código inline con backticks, listas con `-`, citas con `>`, imágenes con `![texto](/uploads/imagen.webp)` y enlaces `[texto](https://url)`. Desde `/admin/posts/create` y `/admin/posts/{id}/edit` también hay toolbar, selector de medios y preview renderizado antes de publicar.
 
 Para embeds, pega la URL sola en una línea. Soporta YouTube, Spotify y Apple Music:

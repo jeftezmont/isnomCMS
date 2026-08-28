@@ -7,6 +7,7 @@ use App\Core\Database;
 use App\Core\Paginator;
 use App\Models\Podcast;
 use App\Models\PodcastEpisode;
+use App\Models\NavLink;
 use App\Services\PodcastAudioService;
 
 final class PodcastController extends Controller
@@ -36,7 +37,9 @@ final class PodcastController extends Controller
 
     public function episode(array $params): void
     {
-        $episode = (new PodcastEpisode(Database::connect($this->config)))->findPublishedBySlugs((string) $params['slug'], (string) $params['episode']);
+        $pdo = Database::connect($this->config);
+        $episodes = new PodcastEpisode($pdo);
+        $episode = $episodes->findPublishedBySlugs((string) $params['slug'], (string) $params['episode']);
         if (!$episode) { $this->notFound(); return; }
         $image = $episode['image_url'] ?: $episode['podcast_cover_image'];
         $episode['audio'] = (new PodcastAudioService($this->config))->resolved($episode);
@@ -45,6 +48,9 @@ final class PodcastController extends Controller
             'title' => $episode['title'],
             'description' => $episode['summary'],
             'episode' => $episode,
+            'adjacent' => $episodes->publicContext((int) $episode['podcast_id'], (int) $episode['id'], (string) $episode['published_at']),
+            'recentEpisodes' => $episodes->recentPublic((int) $episode['podcast_id'], (int) $episode['id']),
+            'blogNav' => (new NavLink($pdo))->forBlog() ?: $this->defaultBlogNav(),
             'canonical' => $this->config['app_url'] . $path,
             'socialImage' => $this->absolute((string) $image),
             'ogType' => 'article',
@@ -128,4 +134,5 @@ final class PodcastController extends Controller
     private function absolute(string $url): string { if ($url === '') return ''; return str_starts_with($url, 'http') ? $url : $this->config['app_url'] . '/' . ltrim($url, '/'); }
     private function xml(string $value): string { return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8'); }
     private function cdata(string $value): string { return '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $value) . ']]>'; }
+    private function defaultBlogNav(): array { return [['label'=>'Inicio','url'=>'/blog'],['label'=>'Tecnología','url'=>'/blog?category=tecnologia'],['label'=>'Teología','url'=>'/blog?category=teologia'],['label'=>'Música','url'=>'/blog?category=musica']]; }
 }

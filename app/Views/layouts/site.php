@@ -18,6 +18,7 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
     <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=30">
+    <script defer src="<?= asset('js/site.js') ?>?v=3"></script>
     <?php
     try {
         $themeSettings = (new \App\Models\Setting(\App\Core\Database::connect($config)))->all();

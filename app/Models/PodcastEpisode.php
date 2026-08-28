@@ -49,6 +49,24 @@ final class PodcastEpisode
         return $stmt->fetch() ?: null;
     }
 
+    public function publicContext(int $podcastId, int $episodeId, string $publishedAt): array
+    {
+        $visibility = "podcast_id = ? AND id <> ? AND status IN ('published','scheduled') AND published_at <= NOW()";
+        $previous = $this->pdo->prepare("SELECT id, title, slug, episode_number, season_number, published_at FROM podcast_episodes WHERE {$visibility} AND (published_at < ? OR (published_at = ? AND id < ?)) ORDER BY published_at DESC, id DESC LIMIT 1");
+        $previous->execute([$podcastId, $episodeId, $publishedAt, $publishedAt, $episodeId]);
+        $next = $this->pdo->prepare("SELECT id, title, slug, episode_number, season_number, published_at FROM podcast_episodes WHERE {$visibility} AND (published_at > ? OR (published_at = ? AND id > ?)) ORDER BY published_at ASC, id ASC LIMIT 1");
+        $next->execute([$podcastId, $episodeId, $publishedAt, $publishedAt, $episodeId]);
+        return ['previous' => $previous->fetch() ?: null, 'next' => $next->fetch() ?: null];
+    }
+
+    public function recentPublic(int $podcastId, int $excludeId, int $limit = 3): array
+    {
+        $limit = max(1, min(6, $limit));
+        $stmt = $this->pdo->prepare("SELECT id, title, slug, summary, duration, image_url, episode_number, season_number, published_at FROM podcast_episodes WHERE podcast_id = ? AND id <> ? AND status IN ('published','scheduled') AND published_at <= NOW() ORDER BY published_at DESC, id DESC LIMIT {$limit}");
+        $stmt->execute([$podcastId, $excludeId]);
+        return $stmt->fetchAll();
+    }
+
     public function save(array $data, ?int $id = null): int
     {
         $fields = ['podcast_id','title','slug','summary','show_notes','audio_source','audio_local_path','audio_original_url','audio_url','audio_mime_type','audio_file_size','duration','image_url','author','episode_number','season_number','episode_type','explicit','status','published_at'];
