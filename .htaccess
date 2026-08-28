@@ -1,0 +1,28 @@
+Options -Indexes
+DirectoryIndex public/index.php
+RewriteEngine On
+
+RewriteRule (^|/)\.git(/|$) - [F,L]
+RewriteRule ^(app|tools|storage|vendor)(/|$) - [F,L]
+RewriteRule ^(config\.php|.*\.sql|.*\.log|README\.md|composer\.(json|lock)|package(-lock)?\.json|\.env.*)$ - [F,L]
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+</IfModule>
+
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+RewriteRule ^(.+)$ public/$1 [L]
+
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+RewriteRule ^(.+)$ public/$1 [L]
+
+RewriteRule ^ public/index.php [L]
