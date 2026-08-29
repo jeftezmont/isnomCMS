@@ -7,9 +7,11 @@ use App\Core\Controller;
 use App\Core\Csrf;
 use App\Core\Database;
 use App\Core\ErrorHandler;
+use App\Core\Gate;
 use App\Models\Media;
 use App\Models\NavLink;
 use App\Models\Post;
+use App\Models\Role;
 use App\Models\Setting;
 use App\Models\Taxonomy;
 use App\Models\User;
@@ -18,6 +20,7 @@ use App\Services\HealthCheckService;
 use App\Services\BackupService;
 use App\Services\DeployCheckService;
 use App\Services\SetupService;
+use App\Services\PublicCache;
 
 final class AdminController extends Controller
 {
@@ -39,7 +42,7 @@ final class AdminController extends Controller
 
     public function dashboard(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('dashboard.view');
         $healthService = new HealthCheckService($this->config);
         $healthReport = $healthService->run();
         $deployReport = (new DeployCheckService($this->config))->run();
@@ -49,8 +52,9 @@ final class AdminController extends Controller
 
         try {
             [$posts] = $this->services();
-            $stats = $posts->stats();
-            $recent = array_slice($posts->allAdmin(), 0, 6);
+            $ownContentOnly = !Gate::allows($this->config, 'posts.edit');
+            $stats = $posts->stats($ownContentOnly ? Auth::id() : null);
+            $recent = array_slice($posts->allAdmin($ownContentOnly ? ['author_id' => Auth::id()] : []), 0, 6);
         } catch (\Throwable $exception) {
             $contentError = 'El módulo de artículos necesita atención. Revisa Salud del sitio para ver qué tabla o configuración falta.';
             ErrorHandler::report($exception, 'admin-dashboard');
@@ -77,7 +81,7 @@ final class AdminController extends Controller
 
     public function health(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('tools.health');
         $this->view('admin/health', [
             'title' => 'Salud del sitio',
             'report' => (new HealthCheckService($this->config))->run(),
@@ -86,7 +90,7 @@ final class AdminController extends Controller
 
     public function deploy(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('tools.deploy');
         $this->view('admin/deploy', [
             'title' => 'Listo para Hostinger',
             'report' => (new DeployCheckService($this->config))->run(),
@@ -98,6 +102,10 @@ final class AdminController extends Controller
         $setup = new SetupService($this->config);
         $state = $setup->state();
         $authenticated = Auth::check($this->config);
+
+        if ($authenticated && ($state['admin_count'] ?? 0) > 0 && !empty($state['schema']['tables']['roles']['exists'])) {
+            $this->requirePermission('tools.setup');
+        }
 
         if (($state['admin_count'] ?? 0) > 0 && !$authenticated) {
             $this->redirect('/admin/login');
@@ -167,7 +175,7 @@ final class AdminController extends Controller
 
     public function posts(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('posts.view');
         $services = $this->servicesOrSetup();
         if (!$services) {
             return;
@@ -175,21 +183,29 @@ final class AdminController extends Controller
         [$posts, $tax] = $services;
         $this->view('admin/posts', [
             'title' => 'Artículos',
-            'posts' => $posts->allAdmin($_GET),
+            'posts' => $posts->allAdmin(array_merge($_GET, Gate::allows($this->config, 'posts.edit') ? [] : ['author_id' => Auth::id()])),
             'categories' => $tax->categories(),
         ], 'admin');
     }
 
     public function postForm(array $params = []): void
     {
-        $this->requireAuth();
+        $id = isset($params['id']) ? (int) $params['id'] : null;
+        $this->requirePermission($id ? 'posts.view' : 'posts.create');
         $services = $this->servicesOrSetup();
         if (!$services) {
             return;
         }
         [$posts, $tax, $media] = $services;
-        $id = isset($params['id']) ? (int) $params['id'] : null;
         $post = $id ? $posts->find($id) : null;
+        if ($id && !$post) {
+            http_response_code(404);
+            (new SiteController($this->config))->notFound();
+            return;
+        }
+        if ($id && !Gate::allows($this->config, 'posts.edit') && (!Gate::allows($this->config, 'posts.edit_own') || (int) ($post['author_id'] ?? 0) !== Auth::id())) {
+            $this->forbidden();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Csrf::verify();
             $image = $post['featured_image'] ?? '';
@@ -203,7 +219,7 @@ final class AdminController extends Controller
                 'content' => trim($_POST['content'] ?? ''),
                 'featured_image' => trim($_POST['featured_image'] ?? '') ?: $image,
                 'category_id' => $_POST['category_id'] ?? null,
-                'status' => in_array($_POST['status'] ?? 'draft', ['draft', 'published', 'private'], true) ? $_POST['status'] : 'draft',
+                'status' => Gate::allows($this->config, 'posts.publish') && in_array($_POST['status'] ?? 'draft', ['draft', 'published', 'private'], true) ? $_POST['status'] : 'draft',
                 'published_at' => $_POST['published_at'] ? str_replace('T', ' ', $_POST['published_at']) . ':00' : date('Y-m-d H:i:s'),
                 'seo_title' => trim($_POST['seo_title'] ?? ''),
                 'seo_description' => trim($_POST['seo_description'] ?? ''),
@@ -211,6 +227,7 @@ final class AdminController extends Controller
             ];
             $savedId = $posts->save($data, Auth::id() ?? 0, $id);
             $posts->syncTags($savedId, $_POST['tags'] ?? '');
+            PublicCache::invalidate($this->config);
             $this->redirect('/admin/posts');
         }
         $tagNames = $id ? implode(', ', array_column($posts->tagsFor($id), 'name')) : '';
@@ -220,12 +237,13 @@ final class AdminController extends Controller
             'categories' => $tax->categories(),
             'mediaItems' => $media->all(),
             'tagNames' => $tagNames,
+            'canPublish' => Gate::allows($this->config, 'posts.publish'),
         ], 'admin');
     }
 
     public function deletePost(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('posts.delete');
         Csrf::verify();
         $services = $this->servicesOrSetup();
         if (!$services) {
@@ -233,12 +251,13 @@ final class AdminController extends Controller
         }
         [$posts] = $services;
         $posts->delete((int) $params['id']);
+        PublicCache::invalidate($this->config);
         $this->redirect('/admin/posts');
     }
 
     public function media(): void
     {
-        $this->requireAuth();
+        $this->requirePermission($_SERVER['REQUEST_METHOD'] === 'POST' ? 'media.create' : 'media.view');
         $services = $this->servicesOrSetup();
         if (!$services) {
             return;
@@ -254,7 +273,7 @@ final class AdminController extends Controller
 
     public function users(): void
     {
-        $this->requireAuth();
+        $this->requirePermission($_SERVER['REQUEST_METHOD'] === 'POST' ? 'users.create' : 'users.view');
         try {
             $users = new User(Database::connect($this->config));
         } catch (\Throwable) {
@@ -265,7 +284,12 @@ final class AdminController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Csrf::verify();
             try {
-                $users->create($_POST);
+                $canAssignRoles = Gate::allows($this->config, 'users.assign_roles');
+                $requestedRole = $canAssignRoles ? (string) ($_POST['role'] ?? 'author') : 'author';
+                if ($requestedRole === 'super_admin' && !Gate::allows($this->config, 'roles.manage')) {
+                    throw new \InvalidArgumentException('No tienes permiso para asignar Super Admin.');
+                }
+                $users->create($_POST, $requestedRole, Auth::id());
                 $this->redirect('/admin/users');
             } catch (\Throwable $exception) {
                 $error = $exception instanceof \PDOException
@@ -277,6 +301,8 @@ final class AdminController extends Controller
         $this->view('admin/users', [
             'title' => 'Usuarios',
             'users' => $users->all(),
+            'roles' => $users->roles(Gate::allows($this->config, 'roles.manage')),
+            'canAssignRoles' => Gate::allows($this->config, 'users.assign_roles'),
             'error' => $error,
             'currentUserId' => Auth::id(),
         ], 'admin');
@@ -284,14 +310,49 @@ final class AdminController extends Controller
 
     public function deleteUser(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('users.delete');
         Csrf::verify();
         $id = (int) $params['id'];
         if ($id === Auth::id()) {
             $this->redirect('/admin/users');
         }
-        (new User(Database::connect($this->config)))->delete($id);
+        try {
+            $users = new User(Database::connect($this->config));
+            if ($users->roleFor($id) === 'super_admin' && !Gate::allows($this->config, 'roles.manage')) $this->forbidden();
+            $users->delete($id);
+        } catch (\InvalidArgumentException $exception) {
+            $_SESSION['_users_error'] = $exception->getMessage();
+        }
         $this->redirect('/admin/users');
+    }
+
+    public function updateUserRole(array $params): void
+    {
+        $this->requirePermission('users.assign_roles');
+        Csrf::verify();
+        $role = (string) ($_POST['role'] ?? 'author');
+        if ($role === 'super_admin' && !Gate::allows($this->config, 'roles.manage')) $this->forbidden();
+        try {
+            (new User(Database::connect($this->config)))->assignRole((int) $params['id'], $role, Auth::id());
+            Gate::clear((int) $params['id']);
+        } catch (\InvalidArgumentException $exception) {
+            $_SESSION['_users_error'] = $exception->getMessage();
+        }
+        $this->redirect('/admin/users');
+    }
+
+    public function roles(): void
+    {
+        $this->requirePermission('roles.manage');
+        $model = new Role(Database::connect($this->config));
+        $message = null;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            Csrf::verify();
+            $model->replacePermissions((string) ($_POST['role'] ?? ''), is_array($_POST['permissions'] ?? null) ? $_POST['permissions'] : []);
+            Gate::clear();
+            $message = 'Permisos actualizados.';
+        }
+        $this->view('admin/roles', ['title' => 'Roles y permisos', 'roles' => $model->all(), 'permissions' => $model->permissions(), 'message' => $message], 'admin');
     }
 
     public function passkeys(): void
@@ -301,7 +362,7 @@ final class AdminController extends Controller
 
     public function deletePasskey(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('security.view');
         Csrf::verify();
         (new WebAuthnCredential(Database::connect($this->config)))->deleteForUser((int) $params['id'], Auth::id() ?? 0);
         $this->redirect('/admin/security');
@@ -309,7 +370,7 @@ final class AdminController extends Controller
 
     public function settings(): void
     {
-        $this->requireAuth();
+        $this->requirePermission($_SERVER['REQUEST_METHOD'] === 'POST' ? 'settings.edit' : 'settings.view');
         try {
             $pdo = Database::connect($this->config);
             $settings = new Setting($pdo);
@@ -337,6 +398,7 @@ final class AdminController extends Controller
                     'threads_url' => trim($_POST['threads_url'] ?? ''),
                 ]);
                 $nav->replaceBlog($_POST['nav_label'] ?? [], $_POST['nav_url'] ?? []);
+                PublicCache::invalidate($this->config);
                 $this->redirect('/admin/settings');
             } catch (\Throwable $exception) {
                 ErrorHandler::report($exception, 'admin-settings');
@@ -369,7 +431,7 @@ final class AdminController extends Controller
 
     public function exportPosts(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('tools.backups');
         $services = $this->servicesOrSetup();
         if (!$services) {
             return;
@@ -382,7 +444,7 @@ final class AdminController extends Controller
 
     public function previewPostMarkdown(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('posts.create');
         if (!Csrf::valid((string) ($_POST['_csrf'] ?? ''))) {
             $this->json(['error' => 'CSRF token inválido.'], 419);
         }
@@ -393,7 +455,7 @@ final class AdminController extends Controller
 
     public function backups(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('tools.backups');
         try {
             $backup = new BackupService(Database::connect($this->config), $this->config);
         } catch (\Throwable) {
@@ -408,7 +470,7 @@ final class AdminController extends Controller
 
     public function downloadBackup(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('tools.backups');
         Csrf::verify();
         $format = (string) ($_GET['format'] ?? 'json');
         $backup = new BackupService(Database::connect($this->config), $this->config);
@@ -438,7 +500,7 @@ final class AdminController extends Controller
 
     public function deleteMedia(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('media.delete');
         Csrf::verify();
         $services = $this->servicesOrSetup();
         if (!$services) {
@@ -451,7 +513,7 @@ final class AdminController extends Controller
 
     public function categories(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('taxonomy.manage');
         $services = $this->servicesOrSetup();
         if (!$services) {
             return;
@@ -460,6 +522,7 @@ final class AdminController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Csrf::verify();
             $tax->saveCategory($_POST);
+            PublicCache::invalidate($this->config);
             $this->redirect('/admin/categories');
         }
         $this->view('admin/taxonomy', ['title' => 'Categorías', 'type' => 'categories', 'items' => $tax->categories()], 'admin');
@@ -467,7 +530,7 @@ final class AdminController extends Controller
 
     public function deleteCategory(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('taxonomy.manage');
         Csrf::verify();
         $services = $this->servicesOrSetup();
         if (!$services) {
@@ -475,12 +538,13 @@ final class AdminController extends Controller
         }
         [, $tax] = $services;
         $tax->deleteCategory((int) $params['id']);
+        PublicCache::invalidate($this->config);
         $this->redirect('/admin/categories');
     }
 
     public function tags(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('taxonomy.manage');
         $services = $this->servicesOrSetup();
         if (!$services) {
             return;
@@ -489,6 +553,7 @@ final class AdminController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Csrf::verify();
             $tax->saveTag($_POST);
+            PublicCache::invalidate($this->config);
             $this->redirect('/admin/tags');
         }
         $this->view('admin/taxonomy', ['title' => 'Etiquetas', 'type' => 'tags', 'items' => $tax->tags()], 'admin');
@@ -496,7 +561,7 @@ final class AdminController extends Controller
 
     public function deleteTag(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('taxonomy.manage');
         Csrf::verify();
         $services = $this->servicesOrSetup();
         if (!$services) {
@@ -504,6 +569,7 @@ final class AdminController extends Controller
         }
         [, $tax] = $services;
         $tax->deleteTag((int) $params['id']);
+        PublicCache::invalidate($this->config);
         $this->redirect('/admin/tags');
     }
 
@@ -517,6 +583,13 @@ final class AdminController extends Controller
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    private function forbidden(): never
+    {
+        http_response_code(403);
+        (new SiteController($this->config))->forbidden();
         exit;
     }
 }

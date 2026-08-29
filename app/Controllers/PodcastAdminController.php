@@ -12,19 +12,20 @@ use App\Models\Media;
 use App\Models\Podcast;
 use App\Models\PodcastEpisode;
 use App\Services\PodcastAudioService;
+use App\Services\PublicCache;
 
 final class PodcastAdminController extends Controller
 {
     public function podcasts(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('podcast.view');
         $model = new Podcast(Database::connect($this->config));
         $this->view('admin/podcasts', ['title' => 'Podcast', 'podcasts' => $model->all()], 'admin');
     }
 
     public function podcastForm(array $params = []): void
     {
-        $this->requireAuth();
+        $this->requirePermission(isset($params['id']) ? 'podcast.edit' : 'podcast.create');
         $pdo = Database::connect($this->config);
         $model = new Podcast($pdo);
         $media = new Media($pdo, $this->config);
@@ -39,7 +40,9 @@ final class PodcastAdminController extends Controller
                     $cover = $media->store($_FILES['cover_upload'], Auth::id() ?? 0) ?: $cover;
                 }
                 $data = $this->podcastData($_POST, $cover);
+                if (!empty($data['active']) && !$this->canPublish()) $data['active'] = 0;
                 $model->save($data, $id);
+                PublicCache::invalidate($this->config);
                 $this->redirect('/admin/podcasts');
             } catch (\Throwable $exception) {
                 ErrorHandler::report($exception, 'podcast-admin');
@@ -52,20 +55,22 @@ final class PodcastAdminController extends Controller
             'podcast' => $podcast,
             'mediaItems' => $media->all(),
             'error' => $error,
+            'canPublish' => $this->canPublish(),
         ], 'admin');
     }
 
     public function deletePodcast(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('podcast.delete');
         Csrf::verify();
         (new Podcast(Database::connect($this->config)))->delete((int) $params['id']);
+        PublicCache::invalidate($this->config);
         $this->redirect('/admin/podcasts');
     }
 
     public function episodes(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('podcast.view');
         $page = Paginator::page($_GET['page'] ?? 1);
         $result = (new PodcastEpisode(Database::connect($this->config)))->paginateAdmin($page);
         $this->view('admin/podcast-episodes', [
@@ -77,7 +82,7 @@ final class PodcastAdminController extends Controller
 
     public function episodeForm(array $params = []): void
     {
-        $this->requireAuth();
+        $this->requirePermission(isset($params['id']) ? 'podcast.edit' : 'podcast.create');
         $pdo = Database::connect($this->config);
         $podcasts = new Podcast($pdo);
         $episodes = new PodcastEpisode($pdo);
@@ -96,7 +101,9 @@ final class PodcastAdminController extends Controller
                     $image = $media->store($_FILES['image_upload'], Auth::id() ?? 0) ?: $image;
                 }
                 $data = $this->episodeData($_POST, $audio, $image);
+                if (in_array($data['status'], ['scheduled', 'published'], true) && !$this->canPublish()) $data['status'] = 'draft';
                 $episodes->save($data, $id);
+                PublicCache::invalidate($this->config);
                 $this->redirect('/admin/podcast-episodes');
             } catch (\Throwable $exception) {
                 ErrorHandler::report($exception, 'podcast-episode-admin');
@@ -111,20 +118,22 @@ final class PodcastAdminController extends Controller
             'podcasts' => $podcasts->all(),
             'mediaItems' => $media->all(),
             'error' => $error,
+            'canPublish' => $this->canPublish(),
         ], 'admin');
     }
 
     public function deleteEpisode(array $params): void
     {
-        $this->requireAuth();
+        $this->requirePermission('podcast.delete');
         Csrf::verify();
         (new PodcastEpisode(Database::connect($this->config)))->delete((int) $params['id']);
+        PublicCache::invalidate($this->config);
         $this->redirect('/admin/podcast-episodes');
     }
 
     public function validateDropbox(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('podcast.create');
         if (!Csrf::valid((string) ($_POST['_csrf'] ?? ''))) {
             $this->json(['ok' => false, 'error' => 'CSRF inválido.'], 419);
         }
@@ -236,5 +245,10 @@ final class PodcastAdminController extends Controller
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    private function canPublish(): bool
+    {
+        return \App\Core\Gate::allows($this->config, 'podcast.publish');
     }
 }

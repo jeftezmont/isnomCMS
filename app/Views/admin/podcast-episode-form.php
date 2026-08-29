@@ -18,7 +18,7 @@
     </section>
     <aside class="editor-side">
         <label>Tipo<select name="episode_type"><option value="full">Completo</option><option value="trailer" <?= ($episode['episode_type'] ?? '') === 'trailer' ? 'selected' : '' ?>>Tráiler</option><option value="bonus" <?= ($episode['episode_type'] ?? '') === 'bonus' ? 'selected' : '' ?>>Bonus</option></select></label>
-        <label>Estado<select name="status"><option value="draft">Borrador</option><option value="scheduled" <?= ($episode['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>>Programado</option><option value="published" <?= ($episode['status'] ?? '') === 'published' ? 'selected' : '' ?>>Publicado</option></select></label>
+        <label>Estado<select name="status" <?= empty($canPublish) ? 'disabled' : '' ?>><option value="draft">Borrador</option><option value="scheduled" <?= ($episode['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>>Programado</option><option value="published" <?= ($episode['status'] ?? '') === 'published' ? 'selected' : '' ?>>Publicado</option></select><?php if (empty($canPublish)): ?><input type="hidden" name="status" value="draft"><?php endif; ?></label>
         <label>Publicación<input type="datetime-local" name="published_at" value="<?= !empty($episode['published_at']) ? e(date('Y-m-d\TH:i', strtotime($episode['published_at']))) : '' ?>"></label>
         <label class="toggle-field"><input type="checkbox" name="explicit" value="1" <?= !empty($episode['explicit']) ? 'checked' : '' ?>>Explícito</label>
         <label>Imagen URL<input name="image_url" value="<?= e($episode['image_url'] ?? '') ?>" data-featured-image></label>

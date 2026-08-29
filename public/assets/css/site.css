@@ -247,6 +247,9 @@ label { display: grid; gap: .4rem; font: 700 .72rem var(--mono); text-transform:
 .row-actions button, .admin-table button { background: transparent; color: var(--ink); border: 0; padding: 0; text-decoration: underline; }
 .ghost-button { background: white; color: var(--ink); }
 .user-form { grid-template-columns: minmax(140px, 1fr) minmax(190px, 1fr) minmax(170px, 1fr) auto; align-items: end; margin-bottom: 1.5rem; }
+.user-form.has-role { grid-template-columns: minmax(140px, 1fr) minmax(190px, 1fr) minmax(170px, 1fr) minmax(130px, .7fr) auto; }
+.permission-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem 1rem; margin: 1rem 0 1.25rem; }
+.permission-grid label { display: flex; align-items: center; gap: .5rem; overflow-wrap: anywhere; }
 .muted-label { color: var(--muted); font: 700 .72rem var(--mono); }
 .filters { grid-template-columns: 1fr 170px 190px auto auto; align-items: end; margin-bottom: 1rem; }
 .editor-form { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 1.5rem; align-items: start; }
@@ -396,7 +399,7 @@ label { display: grid; gap: .4rem; font: 700 .72rem var(--mono); text-transform:
   .bio-panel { gap: 2rem; }
   .bio-copy { margin: 0; max-width: none; }
   .site-footer { grid-template-columns: 1fr; }
-  .blog-tools, .post-row, .editor-form, .admin-shell, .filters, .inline-edit, .user-form, .color-fields, .nav-editor, .link-editor__head, .link-row, .health-sections, .podcast-hero, .episode-grid, .podcast-list, .two-columns, .two-factor-setup { grid-template-columns: 1fr; }
+  .blog-tools, .post-row, .editor-form, .admin-shell, .filters, .inline-edit, .user-form, .user-form.has-role, .color-fields, .nav-editor, .link-editor__head, .link-row, .health-sections, .podcast-hero, .episode-grid, .podcast-list, .two-columns, .two-factor-setup, .permission-grid { grid-template-columns: 1fr; }
   .link-editor__head { display: none; }
   .error-content { margin-left: 0; }
   .blog-primary-nav { justify-content: flex-start; overflow-x: auto; padding-bottom: .35rem; }

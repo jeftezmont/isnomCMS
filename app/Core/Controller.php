@@ -30,4 +30,14 @@ abstract class Controller
             $this->redirect('/admin/login');
         }
     }
+
+    protected function requirePermission(string $permission): void
+    {
+        $this->requireAuth();
+        if (!Gate::allows($this->config, $permission)) {
+            http_response_code(403);
+            (new \App\Controllers\SiteController($this->config))->forbidden();
+            exit;
+        }
+    }
 }

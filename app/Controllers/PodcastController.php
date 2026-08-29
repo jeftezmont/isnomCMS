@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Database;
 use App\Core\Paginator;
+use App\Core\FileCache;
+use App\Core\XmlResponse;
 use App\Models\Podcast;
 use App\Models\PodcastEpisode;
 use App\Models\NavLink;
@@ -71,9 +73,12 @@ final class PodcastController extends Controller
         $podcasts = new Podcast($pdo);
         $podcast = !empty($params['slug']) ? $podcasts->findActiveBySlug((string) $params['slug']) : $podcasts->firstActive();
         if (!$podcast) { http_response_code(404); header('Content-Type: application/rss+xml; charset=utf-8'); echo '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Podcast no encontrado</title></channel></rss>'; return; }
-        $episodes = (new PodcastEpisode($pdo))->allForFeed((int) $podcast['id']);
-        header('Content-Type: application/rss+xml; charset=utf-8');
-        echo $this->rss($podcast, $episodes);
+        $payload = FileCache::fromConfig($this->config)->remember('public.podcast.rss.' . (int) $podcast['id'], function () use ($pdo, $podcast): array {
+            $episodes = (new PodcastEpisode($pdo))->allForFeed((int) $podcast['id']);
+            $modified = strtotime($episodes[0]['updated_at'] ?? $podcast['updated_at'] ?? 'now') ?: time();
+            return ['body' => $this->rss($podcast, $episodes), 'modified' => $modified];
+        });
+        XmlResponse::send($payload['body'], 'application/rss+xml', (int) $payload['modified']);
     }
 
     private function renderPodcast(array $podcast): void

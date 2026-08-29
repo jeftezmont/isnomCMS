@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\FileCache;
+use App\Core\XmlResponse;
 use App\Models\NavLink;
 use App\Models\Post;
 use App\Models\Setting;
@@ -37,6 +39,7 @@ final class BlogController extends Controller
             'query' => $_GET['q'] ?? '',
             'blogNav' => $blogNav ?: $this->defaultBlogNav(),
             'settings' => $settings,
+            'blogFeedUrl' => $this->config['app_url'] . '/blog/feed.xml',
         ], 'site');
     }
 
@@ -72,7 +75,41 @@ final class BlogController extends Controller
             'adjacent' => $adjacent,
             'blogNav' => $blogNav ?: $this->defaultBlogNav(),
             'schemaArticle' => true,
+            'blogFeedUrl' => $this->config['app_url'] . '/blog/feed.xml',
         ], 'site');
+    }
+
+    public function feed(): void
+    {
+        $payload = FileCache::fromConfig($this->config)->remember('public.blog.rss', function (): array {
+            $posts = (new Post(Database::connect($this->config)))->allPublic();
+            $site = $this->config['app_url'];
+            $last = $posts[0]['updated_at'] ?? null;
+            $lines = [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">',
+                '<channel>',
+                '<title>' . $this->xml($this->config['site']['name'] . ' — Blog') . '</title>',
+                '<link>' . $this->xml($site . '/blog') . '</link>',
+                '<description>' . $this->xml($this->config['site']['description']) . '</description>',
+                '<language>es-MX</language>',
+                '<lastBuildDate>' . date(DATE_RSS, strtotime($last ?: 'now')) . '</lastBuildDate>',
+            ];
+            foreach ($posts as $post) {
+                $link = $site . '/blog/' . rawurlencode($post['slug']);
+                $lines[] = '<item>';
+                $lines[] = '<title>' . $this->xml($post['title']) . '</title>';
+                $lines[] = '<link>' . $this->xml($link) . '</link>';
+                $lines[] = '<guid isPermaLink="false">isnomcms:post:' . (int) $post['id'] . '</guid>';
+                $lines[] = '<pubDate>' . date(DATE_RSS, strtotime($post['published_at'])) . '</pubDate>';
+                $lines[] = '<description>' . $this->xml($post['excerpt']) . '</description>';
+                $lines[] = '<content:encoded>' . $this->cdata(markdownish($post['content'])) . '</content:encoded>';
+                $lines[] = '</item>';
+            }
+            $lines[] = '</channel></rss>';
+            return ['body' => implode("\n", $lines), 'modified' => strtotime($last ?: 'now') ?: time()];
+        });
+        XmlResponse::send($payload['body'], 'application/rss+xml', (int) $payload['modified']);
     }
 
     public function legacyRedirect(array $params): void
@@ -91,6 +128,9 @@ final class BlogController extends Controller
             ['id' => 5, 'name' => 'Arte', 'slug' => 'arte'],
         ];
     }
+
+    private function xml(string $value): string { return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8'); }
+    private function cdata(string $value): string { return '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $value) . ']]>'; }
 
     private function defaultBlogNav(): array
     {

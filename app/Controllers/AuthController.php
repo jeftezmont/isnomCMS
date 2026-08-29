@@ -7,6 +7,7 @@ use App\Core\Controller;
 use App\Core\Csrf;
 use App\Core\Database;
 use App\Core\ErrorHandler;
+use App\Core\Gate;
 use App\Core\WebAuthn;
 use App\Models\LoginAttempt;
 use App\Models\TwoFactor;
@@ -171,7 +172,7 @@ final class AuthController extends Controller
 
     public function passkeyRegisterOptions(): void
     {
-        if (!Auth::check($this->config)) {
+        if (!Auth::check($this->config) || !Gate::allows($this->config, 'security.view')) {
             $this->json(['error' => 'No autorizado.'], 403);
             return;
         }
@@ -202,7 +203,7 @@ final class AuthController extends Controller
 
     public function passkeyRegisterVerify(): void
     {
-        if (!Auth::check($this->config)) {
+        if (!Auth::check($this->config) || !Gate::allows($this->config, 'security.view')) {
             $this->json(['error' => 'No autorizado.'], 403);
             return;
         }

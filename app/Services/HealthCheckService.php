@@ -136,11 +136,13 @@ final class HealthCheckService
         $this->ensureDirectory($this->config['upload_dir'] ?? ROOT_PATH . '/public/uploads');
         $this->ensureDirectory($this->config['storage_dir'] ?? ROOT_PATH . '/storage');
         $this->ensureDirectory($this->config['log_dir'] ?? ROOT_PATH . '/storage/logs');
+        $this->ensureDirectory($this->config['cache_dir'] ?? ROOT_PATH . '/storage/cache');
 
         return [
             $this->pathCheck('uploads_directory', 'uploads/', $this->config['upload_dir'] ?? ROOT_PATH . '/public/uploads'),
             $this->pathCheck('storage_directory', 'storage/', $this->config['storage_dir'] ?? ROOT_PATH . '/storage'),
             $this->pathCheck('logs_directory', 'storage/logs/', $this->config['log_dir'] ?? ROOT_PATH . '/storage/logs'),
+            $this->pathCheck('cache_directory', 'storage/cache/', $this->config['cache_dir'] ?? ROOT_PATH . '/storage/cache'),
         ];
     }
 
@@ -200,6 +202,9 @@ final class HealthCheckService
             $setupTokenConfigured ? 'Configurado.' : ($production ? 'No configurado.' : 'Opcional en desarrollo local.'),
             $production && !$setupTokenConfigured ? 'Se recomienda durante la instalación inicial y deja de ser necesario cuando ya existe un administrador.' : null
         );
+
+        $timezone = trim((string) ($this->config['timezone'] ?? ''));
+        $checks[] = $this->check('app_timezone', 'APP_TIMEZONE', in_array($timezone, timezone_identifiers_list(), true) ? 'ok' : 'error', $timezone !== '' ? 'Configurada como ' . $timezone . '.' : 'No configurada.');
 
         return $checks;
     }

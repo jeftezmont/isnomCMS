@@ -29,6 +29,11 @@ final class Post
         return $stmt->fetchAll();
     }
 
+    public function allPublic(): array
+    {
+        return $this->pdo->query('SELECT p.*, c.name category_name, c.slug category_slug, u.name author_name FROM posts p LEFT JOIN categories c ON c.id = p.category_id LEFT JOIN users u ON u.id = p.author_id WHERE p.status = "published" AND p.published_at <= NOW() ORDER BY p.published_at DESC, p.id DESC')->fetchAll();
+    }
+
     public function findPublishedBySlug(string $slug): ?array
     {
         $stmt = $this->pdo->prepare('SELECT p.*, c.name category_name, c.slug category_slug, u.name author_name FROM posts p LEFT JOIN categories c ON c.id = p.category_id LEFT JOIN users u ON u.id = p.author_id WHERE p.slug = ? AND p.status = "published" AND p.published_at <= NOW() LIMIT 1');
@@ -49,15 +54,15 @@ final class Post
 
     public function related(int $postId, ?int $categoryId): array
     {
-        $stmt = $this->pdo->prepare('SELECT p.*, c.name category_name FROM posts p LEFT JOIN categories c ON c.id = p.category_id WHERE p.id != ? AND p.status = "published" AND (? IS NULL OR p.category_id = ?) ORDER BY p.published_at DESC LIMIT 3');
+        $stmt = $this->pdo->prepare('SELECT p.*, c.name category_name FROM posts p LEFT JOIN categories c ON c.id = p.category_id WHERE p.id != ? AND p.status = "published" AND p.published_at <= NOW() AND (? IS NULL OR p.category_id = ?) ORDER BY p.published_at DESC LIMIT 3');
         $stmt->execute([$postId, $categoryId, $categoryId]);
         return $stmt->fetchAll();
     }
 
     public function adjacent(string $publishedAt): array
     {
-        $prev = $this->pdo->prepare('SELECT title, slug FROM posts WHERE status = "published" AND published_at < ? ORDER BY published_at DESC LIMIT 1');
-        $next = $this->pdo->prepare('SELECT title, slug FROM posts WHERE status = "published" AND published_at > ? ORDER BY published_at ASC LIMIT 1');
+        $prev = $this->pdo->prepare('SELECT title, slug FROM posts WHERE status = "published" AND published_at <= NOW() AND published_at < ? ORDER BY published_at DESC LIMIT 1');
+        $next = $this->pdo->prepare('SELECT title, slug FROM posts WHERE status = "published" AND published_at <= NOW() AND published_at > ? ORDER BY published_at ASC LIMIT 1');
         $prev->execute([$publishedAt]);
         $next->execute([$publishedAt]);
         return ['prev' => $prev->fetch() ?: null, 'next' => $next->fetch() ?: null];
@@ -85,6 +90,10 @@ final class Post
         if (!empty($filters['category_id'])) {
             $sql .= ' AND p.category_id = ?';
             $params[] = (int) $filters['category_id'];
+        }
+        if (!empty($filters['author_id'])) {
+            $sql .= ' AND p.author_id = ?';
+            $params[] = (int) $filters['author_id'];
         }
         $sql .= ' ORDER BY COALESCE(p.published_at, p.created_at) DESC';
         $stmt = $this->pdo->prepare($sql);
@@ -145,13 +154,15 @@ final class Post
         $this->pdo->prepare('DELETE FROM posts WHERE id = ?')->execute([$id]);
     }
 
-    public function stats(): array
+    public function stats(?int $authorId = null): array
     {
+        $where = $authorId ? ' WHERE author_id = ' . (int) $authorId : '';
+        $and = $authorId ? ' AND author_id = ' . (int) $authorId : '';
         return [
-            'total' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts')->fetchColumn(),
-            'published' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts WHERE status = "published"')->fetchColumn(),
-            'private' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts WHERE status = "private"')->fetchColumn(),
-            'drafts' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts WHERE status = "draft"')->fetchColumn(),
+            'total' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts' . $where)->fetchColumn(),
+            'published' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts WHERE status = "published"' . $and)->fetchColumn(),
+            'private' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts WHERE status = "private"' . $and)->fetchColumn(),
+            'drafts' => (int) $this->pdo->query('SELECT COUNT(*) FROM posts WHERE status = "draft"' . $and)->fetchColumn(),
             'categories' => (int) $this->pdo->query('SELECT COUNT(*) FROM categories')->fetchColumn(),
         ];
     }

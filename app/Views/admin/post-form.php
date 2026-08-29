@@ -40,11 +40,12 @@
             <a class="button ghost-button" href="/blog/<?= e($post['slug']) ?>?preview=<?= e($post['preview_token']) ?>" target="_blank" rel="noopener">Previsualizar</a>
         <?php endif; ?>
         <label>Estado
-            <select name="status">
+            <select name="status" <?= empty($canPublish) ? 'disabled' : '' ?>>
                 <option value="draft" <?= ($post['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Borrador</option>
                 <option value="private" <?= ($post['status'] ?? '') === 'private' ? 'selected' : '' ?>>Privado</option>
                 <option value="published" <?= ($post['status'] ?? '') === 'published' ? 'selected' : '' ?>>Publicado</option>
             </select>
+            <?php if (empty($canPublish)): ?><input type="hidden" name="status" value="draft"><?php endif; ?>
         </label>
         <label>Fecha de publicación <input type="datetime-local" name="published_at" value="<?= e(isset($post['published_at']) ? date('Y-m-d\TH:i', strtotime($post['published_at'])) : date('Y-m-d\TH:i')) ?>"></label>
         <label>Categoría

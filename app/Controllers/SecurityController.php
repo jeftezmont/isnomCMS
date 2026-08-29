@@ -17,13 +17,13 @@ final class SecurityController extends Controller
 {
     public function index(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('security.view');
         $this->render();
     }
 
     public function start(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('security.view');
         Csrf::verify();
         $pdo = Database::connect($this->config);
         if ((new TwoFactor($pdo))->enabled(Auth::id() ?? 0)) {
@@ -45,7 +45,7 @@ final class SecurityController extends Controller
 
     public function confirm(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('security.view');
         Csrf::verify();
         $pdo = Database::connect($this->config);
         $model = new TwoFactor($pdo);
@@ -67,7 +67,7 @@ final class SecurityController extends Controller
 
     public function regenerate(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('security.view');
         Csrf::verify();
         $pdo = Database::connect($this->config);
         if (!(new User($pdo))->verifyPassword(Auth::id() ?? 0, (string) ($_POST['password'] ?? ''))) {
@@ -84,7 +84,7 @@ final class SecurityController extends Controller
 
     public function disable(): void
     {
-        $this->requireAuth();
+        $this->requirePermission('security.view');
         Csrf::verify();
         $pdo = Database::connect($this->config);
         $userId = Auth::id() ?? 0;

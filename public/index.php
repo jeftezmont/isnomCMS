@@ -27,6 +27,7 @@ spl_autoload_register(function (string $class): void {
 });
 
 $config = require ROOT_PATH . '/config.php';
+date_default_timezone_set((string) ($config['timezone'] ?? 'UTC'));
 \App\Core\ErrorHandler::register($config);
 (new \App\Services\SecurityHeaders($config))->send();
 \App\Core\Session::start($config);
@@ -52,6 +53,7 @@ try {
 $router = new \App\Core\Router($config);
 $router->get('/', [\App\Controllers\SiteController::class, 'home']);
 $router->get('/blog', [\App\Controllers\BlogController::class, 'index']);
+$router->get('/blog/feed.xml', [\App\Controllers\BlogController::class, 'feed']);
 $router->get('/blog/{slug}', [\App\Controllers\BlogController::class, 'show']);
 $router->get('/podcast', [\App\Controllers\PodcastController::class, 'index']);
 $router->get('/podcast/feed.xml', [\App\Controllers\PodcastController::class, 'feed']);
@@ -99,6 +101,8 @@ $router->match(['GET', 'POST'], '/admin/media', [\App\Controllers\AdminControlle
 $router->post('/admin/media/{id}/delete', [\App\Controllers\AdminController::class, 'deleteMedia']);
 $router->match(['GET', 'POST'], '/admin/users', [\App\Controllers\AdminController::class, 'users']);
 $router->post('/admin/users/{id}/delete', [\App\Controllers\AdminController::class, 'deleteUser']);
+$router->post('/admin/users/{id}/role', [\App\Controllers\AdminController::class, 'updateUserRole']);
+$router->match(['GET', 'POST'], '/admin/roles', [\App\Controllers\AdminController::class, 'roles']);
 $router->get('/admin/passkeys', [\App\Controllers\AdminController::class, 'passkeys']);
 $router->post('/admin/passkeys/{id}/delete', [\App\Controllers\AdminController::class, 'deletePasskey']);
 $router->get('/admin/security', [\App\Controllers\SecurityController::class, 'index']);

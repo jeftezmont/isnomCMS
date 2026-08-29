@@ -29,6 +29,9 @@ Rediseño PHP/MySQL de `jeftezmont.me` con home editorial, blog dinámico y CMS 
 - Checklist de deploy: `/admin/deploy`
 - Podcasts: `/admin/podcasts`
 - Episodios: `/admin/podcast-episodes`
+- Roles y permisos: `/admin/roles` (solo Super Admin)
+
+Los roles iniciales son Super Admin, Admin, Editor y Autor. El primer usuario queda asignado automáticamente como Super Admin. Los permisos se validan en servidor y el CMS impide degradar o eliminar al último Super Admin.
 
 ## Podcast
 
@@ -41,6 +44,7 @@ Rutas públicas:
 - `/podcast/{podcast}/{episodio}`
 - `/podcast/feed.xml`
 - `/podcast/{podcast}/feed.xml`
+- `/blog/feed.xml` (RSS independiente del Blog)
 
 El feed RSS 2.0 incluye namespaces iTunes y Content, todos los episodios publicados, metadatos de Apple Podcasts/Spotify y `enclosure` con URL, MIME y longitud. El correo configurado como propietario puede quedar públicamente visible en el RSS.
 
@@ -192,3 +196,16 @@ php tools/import_posts_csv.php posts.csv
 ```
 
 Columnas requeridas: `title`, `slug`, `excerpt`, `content`, `status`, `published_at`. Conserva los slugs antiguos para no romper enlaces.
+# Tareas programadas
+
+Configura un Cron Job cada cinco minutos usando PHP CLI desde la raíz del proyecto:
+
+```sh
+*/5 * * * * /usr/bin/php /ruta/al/proyecto/bin/cron.php
+```
+
+En Hostinger selecciona la versión de PHP CLI correspondiente al sitio y sustituye únicamente la ruta genérica por la ruta real del proyecto. El comando usa `flock`, registra su ejecución en `storage/logs/app.log` y no expone ningún endpoint HTTP.
+
+## Caché y recursos XML
+
+El sitemap dinámico (`/sitemap.xml`), el RSS del Blog (`/blog/feed.xml`) y los feeds de Podcast usan caché de archivos en `storage/cache/`, ETag y Last-Modified. Crear, editar, publicar o eliminar contenido invalida la caché pública; el cron elimina entradas vencidas. `storage/cache/` debe ser escribible y permanecer fuera del acceso público.

@@ -52,7 +52,12 @@ final class SetupService
 
     public function repairSchema(): array
     {
-        return $this->schema()->applySafeUpdates(Database::connect($this->config));
+        $pdo = Database::connect($this->config);
+        $result = $this->schema()->applySafeUpdates($pdo);
+        if (empty($result['errors'])) {
+            (new RoleSeeder())->seed($pdo);
+        }
+        return $result;
     }
 
     public function createFirstAdmin(array $data): array

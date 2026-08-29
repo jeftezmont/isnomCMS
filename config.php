@@ -10,6 +10,7 @@ return [
     'app_env' => env_value('APP_ENV', 'production'),
     'app_url' => rtrim(env_value('APP_URL', 'https://jeftezmont.me'), '/'),
     'app_key' => env_value('APP_KEY', ''),
+    'timezone' => env_value('APP_TIMEZONE', 'America/Mexico_City'),
     'setup_token' => env_value('SETUP_TOKEN', ''),
     'db' => [
         'host' => env_value('DB_HOST', 'localhost'),
@@ -38,6 +39,8 @@ return [
     'audio_upload_url' => '/uploads/audio',
     'storage_dir' => __DIR__ . '/storage',
     'log_dir' => __DIR__ . '/storage/logs',
+    'cache_dir' => __DIR__ . '/storage/cache',
+    'cache_ttl' => max(60, (int) env_value('CACHE_TTL', '900')),
     'site' => [
         'name' => 'jefté montenegro',
         'role' => 'computer engineer',
