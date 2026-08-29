@@ -89,3 +89,22 @@ document.querySelectorAll('[data-copy-share]').forEach((button) => button.addEve
     if (status) status.textContent = 'No se pudo copiar el enlace.';
   }
 }));
+
+const backToTop = document.querySelector('[data-back-to-top]');
+if (backToTop) {
+  let scheduled = false;
+  const updateBackToTop = () => {
+    backToTop.hidden = window.scrollY < 600;
+    scheduled = false;
+  };
+  window.addEventListener('scroll', () => {
+    if (scheduled) return;
+    scheduled = true;
+    window.requestAnimationFrame(updateBackToTop);
+  }, { passive: true });
+  backToTop.addEventListener('click', () => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+  });
+  updateBackToTop();
+}

@@ -58,6 +58,36 @@ CREATE TABLE webauthn_credentials (
   CONSTRAINT fk_webauthn_credentials_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE user_two_factor (
+  user_id INT UNSIGNED NOT NULL PRIMARY KEY,
+  encrypted_secret TEXT NOT NULL,
+  enabled_at DATETIME NULL,
+  last_used_step BIGINT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  CONSTRAINT fk_user_two_factor_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE two_factor_recovery_codes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  code_hash VARCHAR(255) NOT NULL,
+  used_at DATETIME NULL,
+  created_at DATETIME NOT NULL,
+  INDEX idx_two_factor_recovery_user (user_id, used_at),
+  CONSTRAINT fk_two_factor_recovery_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE two_factor_attempts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  ip_address VARCHAR(45) NOT NULL,
+  success TINYINT(1) NOT NULL DEFAULT 0,
+  attempted_at DATETIME NOT NULL,
+  INDEX idx_two_factor_attempts_lookup (user_id, ip_address, attempted_at),
+  CONSTRAINT fk_two_factor_attempts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE categories (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,

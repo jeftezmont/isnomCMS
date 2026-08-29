@@ -17,8 +17,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('favicon/favicon-16x16.png') ?>">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
-    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=31">
-    <script defer src="<?= asset('js/site.js') ?>?v=3"></script>
+    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=32">
+    <script defer src="<?= asset('js/site.js') ?>?v=4"></script>
     <?php
     try {
         $themeSettings = (new \App\Models\Setting(\App\Core\Database::connect($config)))->all();
@@ -50,5 +50,6 @@
 </head>
 <body>
     <?= $content ?>
+    <button class="back-to-top" type="button" aria-label="Volver arriba" data-back-to-top hidden>↑</button>
 </body>
 </html>

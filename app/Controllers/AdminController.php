@@ -296,18 +296,7 @@ final class AdminController extends Controller
 
     public function passkeys(): void
     {
-        $this->requireAuth();
-        try {
-            $credentials = new WebAuthnCredential(Database::connect($this->config));
-        } catch (\Throwable) {
-            $this->redirect('/admin/setup');
-        }
-
-        $this->view('admin/passkeys', [
-            'title' => 'Passkeys',
-            'passkeys' => $credentials->forUser(Auth::id() ?? 0),
-            'csrfToken' => Csrf::token(),
-        ], 'admin');
+        $this->redirect('/admin/security');
     }
 
     public function deletePasskey(array $params): void
@@ -315,7 +304,7 @@ final class AdminController extends Controller
         $this->requireAuth();
         Csrf::verify();
         (new WebAuthnCredential(Database::connect($this->config)))->deleteForUser((int) $params['id'], Auth::id() ?? 0);
-        $this->redirect('/admin/passkeys');
+        $this->redirect('/admin/security');
     }
 
     public function settings(): void

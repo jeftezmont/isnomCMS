@@ -228,11 +228,13 @@ final class HealthCheckService
         }
 
         $rpId = trim((string) ($this->config['webauthn']['rp_id'] ?? ''));
+        $appKey = trim((string) ($this->config['app_key'] ?? ''));
         $origins = array_values(array_filter($this->config['webauthn']['origins'] ?? []));
         $originSecure = $origins !== [] && count(array_filter($origins, fn(string $origin): bool => $this->secureWebAuthnOrigin($origin))) === count($origins);
 
         return [
             $turnstile,
+            $this->check('app_key', 'Clave de cifrado APP_KEY', strlen($appKey) >= 32 ? 'ok' : 'error', strlen($appKey) >= 32 ? 'Configurada para secretos de seguridad.' : 'No configurada o demasiado corta.', 'Define una clave aleatoria de al menos 32 caracteres.'),
             $this->check('webauthn_rp', 'WebAuthn RP ID', $rpId !== '' ? 'ok' : 'error', $rpId !== '' ? 'Configurado para ' . $rpId . '.' : 'No configurado.'),
             $this->check('webauthn_origin', 'WebAuthn Origin', $originSecure ? 'ok' : ($origins === [] ? 'error' : 'warning'), $originSecure ? 'Los origins configurados son compatibles.' : ($origins === [] ? 'No hay origins configurados.' : 'Algún origin no usa HTTPS ni localhost.')),
         ];
@@ -252,7 +254,7 @@ final class HealthCheckService
         $versionStatus = version_compare(PHP_VERSION, '8.0.0', '<') ? 'error' : (version_compare(PHP_VERSION, '8.2.0', '<') ? 'warning' : 'ok');
         $checks[] = $this->check('php_version', 'PHP ' . PHP_VERSION, $versionStatus, $versionStatus === 'ok' ? 'Versión compatible y recomendada.' : ($versionStatus === 'warning' ? 'Compatible; se recomienda PHP 8.2 o superior.' : 'Se requiere PHP 8.0 o superior.'));
 
-        $required = ['PDO', 'pdo_mysql', 'fileinfo', 'openssl', 'json', 'mbstring', 'iconv', 'session'];
+        $required = ['PDO', 'pdo_mysql', 'fileinfo', 'openssl', 'sodium', 'json', 'mbstring', 'iconv', 'session'];
         foreach ($required as $extension) {
             $loaded = extension_loaded($extension);
             $checks[] = $this->check('php_ext_' . strtolower($extension), $extension, $loaded ? 'ok' : 'error', $loaded ? 'Extensión disponible.' : 'Extensión requerida no disponible.');

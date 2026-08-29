@@ -66,6 +66,8 @@ $router->get('/sitemap.xml', [\App\Controllers\SeoController::class, 'sitemap'])
 $router->get('/robots.txt', [\App\Controllers\SeoController::class, 'robots']);
 
 $router->match(['GET', 'POST'], '/admin/login', [\App\Controllers\AuthController::class, 'login']);
+$router->match(['GET', 'POST'], '/admin/login/2fa', [\App\Controllers\AuthController::class, 'twoFactorChallenge']);
+$router->post('/admin/login/2fa/cancel', [\App\Controllers\AuthController::class, 'cancelTwoFactor']);
 $router->post('/admin/passkeys/login/options', [\App\Controllers\AuthController::class, 'passkeyLoginOptions']);
 $router->post('/admin/passkeys/login/verify', [\App\Controllers\AuthController::class, 'passkeyLoginVerify']);
 $router->post('/admin/passkeys/register/options', [\App\Controllers\AuthController::class, 'passkeyRegisterOptions']);
@@ -99,6 +101,11 @@ $router->match(['GET', 'POST'], '/admin/users', [\App\Controllers\AdminControlle
 $router->post('/admin/users/{id}/delete', [\App\Controllers\AdminController::class, 'deleteUser']);
 $router->get('/admin/passkeys', [\App\Controllers\AdminController::class, 'passkeys']);
 $router->post('/admin/passkeys/{id}/delete', [\App\Controllers\AdminController::class, 'deletePasskey']);
+$router->get('/admin/security', [\App\Controllers\SecurityController::class, 'index']);
+$router->post('/admin/security/2fa/start', [\App\Controllers\SecurityController::class, 'start']);
+$router->post('/admin/security/2fa/confirm', [\App\Controllers\SecurityController::class, 'confirm']);
+$router->post('/admin/security/2fa/recovery', [\App\Controllers\SecurityController::class, 'regenerate']);
+$router->post('/admin/security/2fa/disable', [\App\Controllers\SecurityController::class, 'disable']);
 $router->match(['GET', 'POST'], '/admin/categories', [\App\Controllers\AdminController::class, 'categories']);
 $router->post('/admin/categories/{id}/delete', [\App\Controllers\AdminController::class, 'deleteCategory']);
 $router->match(['GET', 'POST'], '/admin/tags', [\App\Controllers\AdminController::class, 'tags']);

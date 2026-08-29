@@ -25,6 +25,26 @@ final class User
         return $user ?: null;
     }
 
+    public function findWithPassword(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function byLogin(string $login): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE email = ? OR name = ? LIMIT 1');
+        $stmt->execute([$login, $login]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function verifyPassword(int $id, string $password): bool
+    {
+        $user = $this->findWithPassword($id);
+        return $user && password_verify($password, $user['password_hash']);
+    }
+
     public function create(array $data): int
     {
         $name = trim($data['name'] ?? '');

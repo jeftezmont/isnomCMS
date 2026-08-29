@@ -9,6 +9,7 @@ $webauthnOrigins = env_value('WEBAUTHN_ORIGINS', env_value('APP_URL', 'https://j
 return [
     'app_env' => env_value('APP_ENV', 'production'),
     'app_url' => rtrim(env_value('APP_URL', 'https://jeftezmont.me'), '/'),
+    'app_key' => env_value('APP_KEY', ''),
     'setup_token' => env_value('SETUP_TOKEN', ''),
     'db' => [
         'host' => env_value('DB_HOST', 'localhost'),

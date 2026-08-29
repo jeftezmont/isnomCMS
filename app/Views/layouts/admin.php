@@ -12,6 +12,7 @@ function admin_icon(string $name): string
         'list-audio' => '<path d="M11 6h10"/><path d="M11 12h10"/><path d="M11 18h10"/><path d="M4 17v-6"/><circle cx="4" cy="19" r="2"/>',
         'user' => '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
         'key-round' => '<path d="M2 18v3h3l8.7-8.7"/><circle cx="16" cy="8" r="6"/><path d="M19.5 4.5 18 6"/><path d="m15 9 3-3"/>',
+        'shield' => '<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3Z"/><path d="m9 12 2 2 4-4"/>',
         'settings' => '<path d="M12.2 2h-.4a2 2 0 0 0-2 1.7l-.2 1.2a7.8 7.8 0 0 0-1.6.9L6.9 5.3a2 2 0 0 0-2.6.8l-.2.4a2 2 0 0 0 .4 2.7l.9.8a8 8 0 0 0 0 1.9l-.9.8a2 2 0 0 0-.4 2.7l.2.4a2 2 0 0 0 2.6.8l1.1-.5a7.8 7.8 0 0 0 1.6.9l.2 1.2a2 2 0 0 0 2 1.7h.4a2 2 0 0 0 2-1.7l.2-1.2a7.8 7.8 0 0 0 1.6-.9l1.1.5a2 2 0 0 0 2.6-.8l.2-.4a2 2 0 0 0-.4-2.7l-.9-.8a8 8 0 0 0 0-1.9l.9-.8a2 2 0 0 0 .4-2.7l-.2-.4a2 2 0 0 0-2.6-.8l-1.1.5a7.8 7.8 0 0 0-1.6-.9l-.2-1.2a2 2 0 0 0-2-1.7Z"/><circle cx="12" cy="12" r="3"/>',
         'archive' => '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',
         'rocket' => '<path d="M4.5 16.5c-1.2 1-1.7 2.6-1.5 4.5 1.9.2 3.5-.3 4.5-1.5"/><path d="M9 15 4 20"/><path d="M15 9l-6 6"/><path d="M14 3c3.5.2 5.8 1.2 7 3-1.8 4.8-4.8 8.1-9 10l-5-5c1.9-4.2 5.2-7.2 10-9Z"/><path d="M14 3c-.4 2 .1 3.8 1.5 5.2S18.7 10.1 21 9"/><circle cx="15" cy="9" r="1"/>',
@@ -33,7 +34,7 @@ function admin_icon(string $name): string
     <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('favicon/favicon-16x16.png') ?>">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
-    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=30">
+    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=32">
     <?php
     try {
         $themeSettings = (new \App\Models\Setting(\App\Core\Database::connect($config)))->all();
@@ -49,7 +50,8 @@ function admin_icon(string $name): string
         }
     </style>
     <?php endif; ?>
-    <script defer src="<?= asset('js/admin.js') ?>?v=31"></script>
+    <script defer src="<?= asset('vendor/qrcode-generator/qrcode.js') ?>"></script>
+    <script defer src="<?= asset('js/admin.js') ?>?v=32"></script>
 </head>
 <body class="admin-shell">
     <aside class="admin-nav">
@@ -65,7 +67,7 @@ function admin_icon(string $name): string
             <a class="nav-link <?= $path === '/admin/tags' ? 'active' : '' ?>" href="/admin/tags"><?= admin_icon('tag') ?>Etiquetas</a>
             <a class="nav-link <?= $path === '/admin/media' ? 'active' : '' ?>" href="/admin/media"><?= admin_icon('image') ?>Medios</a>
             <a class="nav-link <?= $path === '/admin/users' ? 'active' : '' ?>" href="/admin/users"><?= admin_icon('user') ?>Usuarios</a>
-            <a class="nav-link <?= $path === '/admin/passkeys' ? 'active' : '' ?>" href="/admin/passkeys"><?= admin_icon('key-round') ?>Passkeys</a>
+            <a class="nav-link <?= str_starts_with($path, '/admin/security') || $path === '/admin/passkeys' ? 'active' : '' ?>" href="/admin/security"><?= admin_icon('shield') ?>Seguridad</a>
             <a class="nav-link <?= $path === '/admin/health' ? 'active' : '' ?>" href="/admin/health"><?= admin_icon('activity') ?>Salud del sitio</a>
             <a class="nav-link <?= $path === '/admin/backups' ? 'active' : '' ?>" href="/admin/backups"><?= admin_icon('archive') ?>Backups</a>
             <a class="nav-link <?= $path === '/admin/deploy' ? 'active' : '' ?>" href="/admin/deploy"><?= admin_icon('rocket') ?>Deploy</a>

@@ -9,9 +9,12 @@ use App\Core\Database;
 use App\Core\ErrorHandler;
 use App\Core\WebAuthn;
 use App\Models\LoginAttempt;
+use App\Models\TwoFactor;
 use App\Models\User;
 use App\Models\WebAuthnChallenge;
 use App\Models\WebAuthnCredential;
+use App\Services\SecretCipher;
+use App\Services\TotpService;
 
 final class AuthController extends Controller
 {
@@ -49,8 +52,14 @@ final class AuthController extends Controller
                 }
 
                 $remember = !empty($_POST['remember']);
-                if (Auth::attempt($this->config, $email, $_POST['password'] ?? '', $remember)) {
+                $user = Auth::credentials($this->config, $email, $_POST['password'] ?? '');
+                if ($user) {
                     $attempts->record($ip, $email, true);
+                    if ((new TwoFactor(Database::connect($this->config)))->enabled((int) $user['id'])) {
+                        Auth::beginTwoFactor($this->config, $user, $remember);
+                        $this->redirect('/admin/login/2fa');
+                    }
+                    Auth::completeLogin($this->config, $user, $remember);
                     $this->redirect('/admin');
                 }
                 $attempts->record($ip, $email, false);
@@ -67,6 +76,48 @@ final class AuthController extends Controller
             'turnstileAction' => $this->turnstileAction(),
             'csrfToken' => Csrf::token(),
         ], 'admin-auth');
+    }
+
+    public function twoFactorChallenge(): void
+    {
+        $pending = Auth::twoFactorPending();
+        if (!$pending) $this->redirect('/admin/login');
+        $error = null;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            Csrf::verify();
+            $pdo = Database::connect($this->config);
+            $twoFactor = new TwoFactor($pdo);
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $userId = (int) $pending['user_id'];
+            if ($twoFactor->tooManyAttempts($userId, $ip)) {
+                $error = 'Demasiados intentos. Intenta de nuevo en unos minutos.';
+            } else {
+                $row = $twoFactor->find($userId);
+                $value = trim((string) ($_POST['code'] ?? ''));
+                $valid = false;
+                if ($row && $row['enabled_at'] !== null) {
+                    $secret = (new SecretCipher((string) ($this->config['app_key'] ?? '')))->decrypt($row['encrypted_secret']);
+                    $step = (new TotpService())->verify($secret, $value);
+                    $valid = $step !== null ? $twoFactor->acceptStep($userId, $step) : $twoFactor->consumeRecoveryCode($userId, $value);
+                }
+                $twoFactor->recordAttempt($userId, $ip, $valid);
+                if ($valid) {
+                    $user = (new User($pdo))->findWithPassword($userId);
+                    if (!$user) throw new \RuntimeException('Usuario no encontrado.');
+                    Auth::completeLogin($this->config, $user, !empty($pending['remember']));
+                    $this->redirect('/admin');
+                }
+                $error = 'Código incorrecto o ya utilizado.';
+            }
+        }
+        $this->view('admin/two-factor-challenge', ['title' => 'Verificación en dos pasos', 'error' => $error], 'admin-auth');
+    }
+
+    public function cancelTwoFactor(): void
+    {
+        Csrf::verify();
+        Auth::clearTwoFactorPending();
+        $this->redirect('/admin/login');
     }
 
     public function logout(): void
@@ -109,6 +160,7 @@ final class AuthController extends Controller
                 new WebAuthnChallenge($pdo),
                 new WebAuthnCredential($pdo)
             );
+            Auth::clearTwoFactorPending();
             Auth::loginUser((int) $credential['user_id'], (string) $credential['user_name']);
             $this->json(['ok' => true, 'redirect' => '/admin']);
         } catch (\Throwable $exception) {
@@ -170,7 +222,7 @@ final class AuthController extends Controller
             );
             $data['label'] = trim((string) ($input['label'] ?? '')) ?: 'Passkey';
             (new WebAuthnCredential($pdo))->create(Auth::id() ?? 0, $data);
-            $this->json(['ok' => true, 'redirect' => '/admin/passkeys']);
+            $this->json(['ok' => true, 'redirect' => '/admin/security']);
         } catch (\Throwable $exception) {
             ErrorHandler::report($exception, 'passkey-registration');
             $this->json(['error' => 'No se pudo registrar la passkey.'], 400);

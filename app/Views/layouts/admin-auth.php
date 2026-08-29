@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('favicon/favicon-16x16.png') ?>">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
-    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=30">
+    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=32">
     <?php
     try {
         $themeSettings = (new \App\Models\Setting(\App\Core\Database::connect($config)))->all();
@@ -27,7 +27,7 @@
     <?php if (!empty($turnstileSiteKey)): ?>
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <?php endif; ?>
-    <script defer src="<?= asset('js/admin.js') ?>?v=30"></script>
+    <script defer src="<?= asset('js/admin.js') ?>?v=32"></script>
 </head>
 <body class="auth-page">
     <?= $content ?>

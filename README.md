@@ -5,7 +5,7 @@ Rediseño PHP/MySQL de `jeftezmont.me` con home editorial, blog dinámico y CMS 
 ## Instalación en Hostinger
 
 1. Crea una base de datos MySQL/MariaDB desde hPanel.
-2. Copia `.env.hostinger.example` como `.env`, pega las credenciales reales y define una clave temporal larga en `SETUP_TOKEN`.
+2. Copia `.env.hostinger.example` como `.env`, pega las credenciales reales, genera `APP_KEY` con `php -r 'echo bin2hex(random_bytes(32));'` y define una clave temporal larga en `SETUP_TOKEN`.
 3. Sube el proyecto dejando `public/` como document root del dominio. Si Hostinger no permite cambiar el document root, conserva las reglas incluidas en `.htaccess` para enviar las solicitudes a `public/index.php`.
 4. Visita `/admin/setup`, introduce `SETUP_TOKEN` y ejecuta **Aplicar actualizaciones seguras**. También puedes importar `database.sql` previamente con phpMyAdmin; el asistente detectará lo que ya exista.
 5. Crea el primer administrador desde el paso 4 del asistente. `database.sql` no contiene usuarios ni contraseñas predeterminadas.

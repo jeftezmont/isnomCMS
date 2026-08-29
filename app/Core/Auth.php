@@ -8,6 +8,7 @@ final class Auth
 {
     public static function check(array $config = []): bool
     {
+        if (self::twoFactorPending()) return false;
         if (!empty($_SESSION['user_id'])) {
             return true;
         }
@@ -21,22 +22,60 @@ final class Auth
 
     public static function attempt(array $config, string $email, string $password, bool $remember = false): bool
     {
+        $user = self::credentials($config, $email, $password);
+        if (!$user) return false;
+        self::completeLogin($config, $user, $remember);
+        return true;
+    }
+
+    public static function credentials(array $config, string $login, string $password): ?array
+    {
         $pdo = Database::connect($config);
-        $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
-        $stmt->execute([$email]);
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ? OR name = ? LIMIT 1');
+        $stmt->execute([$login, $login]);
         $user = $stmt->fetch();
-        if (!$user || !password_verify($password, $user['password_hash'])) {
-            return false;
-        }
-        self::loginUser((int) $user['id'], $user['name']);
+        return $user && password_verify($password, $user['password_hash']) ? $user : null;
+    }
+
+    public static function completeLogin(array $config, array $user, bool $remember = false): void
+    {
+        self::loginUser((int) $user['id'], (string) $user['name']);
         if ($remember) {
-            $rememberToken = new RememberToken($pdo);
+            $rememberToken = new RememberToken(Database::connect($config));
             $rememberToken->deleteExpired();
             self::setRememberCookie($rememberToken->create((int) $user['id']));
         } else {
             self::clearRememberCookie();
         }
-        return true;
+        self::clearTwoFactorPending();
+    }
+
+    public static function beginTwoFactor(array $config, array $user, bool $remember): void
+    {
+        (new RememberToken(Database::connect($config)))->revokeForUser((int) $user['id']);
+        self::clearRememberCookie();
+        session_regenerate_id(true);
+        unset($_SESSION['user_id'], $_SESSION['user_name']);
+        $_SESSION['two_factor_pending'] = [
+            'user_id' => (int) $user['id'],
+            'remember' => $remember,
+            'expires_at' => time() + 300,
+        ];
+    }
+
+    public static function twoFactorPending(): ?array
+    {
+        $pending = $_SESSION['two_factor_pending'] ?? null;
+        if (!is_array($pending) || (int) ($pending['expires_at'] ?? 0) < time()) {
+            self::clearTwoFactorPending();
+            return null;
+        }
+        return $pending;
+    }
+
+    public static function clearTwoFactorPending(): void
+    {
+        unset($_SESSION['two_factor_pending']);
     }
 
     public static function loginUser(int $id, string $name): void

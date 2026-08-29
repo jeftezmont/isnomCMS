@@ -277,6 +277,16 @@ label { display: grid; gap: .4rem; font: 700 .72rem var(--mono); text-transform:
 .settings-form { display: grid; gap: 1rem; max-width: 1100px; }
 .settings-panel { display: grid; gap: 1rem; background: white; border: 1px solid var(--soft-line); padding: 1rem; }
 .settings-panel h2 { margin: 0; font-size: 1rem; }
+.security-summary { margin-bottom: 1rem; }
+.security-summary h1 { margin: 0; }
+.security-form { display: grid; gap: 1rem; max-width: 560px; }
+.two-factor-setup { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.5rem; align-items: center; }
+[data-totp-qr-canvas] { padding: 1rem; background: white; border: 1px solid var(--soft-line); }
+[data-totp-qr-canvas] svg { display: block; width: 100%; height: auto; }
+.recovery-codes { padding: 1rem; border: 1px solid var(--soft-line); background: var(--bg); font: 700 .9rem/1.8 var(--mono); }
+.back-to-top { position: fixed; z-index: 20; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem)); width: 44px; height: 44px; padding: 0; border: 1px solid var(--ink); background: var(--bg); color: var(--ink); font-size: 1.1rem; }
+.back-to-top:hover, .back-to-top:focus-visible { border-color: var(--accent); background: var(--accent); color: white; }
+.back-to-top[hidden] { display: none; }
 .color-fields, .nav-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .color-fields label { grid-template-columns: 4rem 1fr; align-items: end; }
 .color-fields label input:first-of-type { height: 2.65rem; padding: .2rem; }
@@ -386,7 +396,7 @@ label { display: grid; gap: .4rem; font: 700 .72rem var(--mono); text-transform:
   .bio-panel { gap: 2rem; }
   .bio-copy { margin: 0; max-width: none; }
   .site-footer { grid-template-columns: 1fr; }
-  .blog-tools, .post-row, .editor-form, .admin-shell, .filters, .inline-edit, .user-form, .color-fields, .nav-editor, .link-editor__head, .link-row, .health-sections, .podcast-hero, .episode-grid, .podcast-list, .two-columns { grid-template-columns: 1fr; }
+  .blog-tools, .post-row, .editor-form, .admin-shell, .filters, .inline-edit, .user-form, .color-fields, .nav-editor, .link-editor__head, .link-row, .health-sections, .podcast-hero, .episode-grid, .podcast-list, .two-columns, .two-factor-setup { grid-template-columns: 1fr; }
   .link-editor__head { display: none; }
   .error-content { margin-left: 0; }
   .blog-primary-nav { justify-content: flex-start; overflow-x: auto; padding-bottom: .35rem; }

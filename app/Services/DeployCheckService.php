@@ -26,6 +26,7 @@ final class DeployCheckService
             $this->fromHealth($health, 'env_file', '.env o variables de hosting'),
             $this->fromHealth($health, 'production_mode', 'APP_ENV=production'),
             $this->fromHealth($health, 'turnstile', 'Turnstile configurado'),
+            $this->fromHealth($health, 'app_key', 'APP_KEY para cifrado 2FA'),
             $this->fromHealth($health, 'webauthn_origin', 'Passkeys/WebAuthn'),
             $this->fileCheck('favicon', 'Favicon disponible', ROOT_PATH . '/public/favicon.ico'),
             $this->routeFileCheck('robots', 'robots.txt disponible', '/robots.txt'),
@@ -61,7 +62,7 @@ final class DeployCheckService
 
     private function aggregateExtensions(array $health): array
     {
-        $required = ['php_ext_pdo', 'php_ext_pdo_mysql', 'php_ext_fileinfo', 'php_ext_openssl', 'php_ext_json', 'php_ext_mbstring', 'php_ext_iconv', 'php_ext_session'];
+        $required = ['php_ext_pdo', 'php_ext_pdo_mysql', 'php_ext_fileinfo', 'php_ext_openssl', 'php_ext_sodium', 'php_ext_json', 'php_ext_mbstring', 'php_ext_iconv', 'php_ext_session'];
         $missing = [];
         foreach ($required as $id) {
             $check = (new HealthCheckService($this->config))->find($health, $id);

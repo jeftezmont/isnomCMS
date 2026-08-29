@@ -68,6 +68,33 @@ document.querySelectorAll('[data-insert-media]').forEach((button) => {
   });
 });
 
+document.querySelectorAll('[data-totp-qr]').forEach((root) => {
+  const target = root.querySelector('[data-totp-qr-canvas]');
+  if (!target || typeof window.qrcode !== 'function') return;
+  const qr = window.qrcode(0, 'M');
+  qr.addData(root.dataset.totpQr);
+  qr.make();
+  target.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+});
+
+document.querySelectorAll('[data-copy-recovery]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(button.dataset.copyRecovery || '');
+    button.textContent = 'Códigos copiados';
+  });
+});
+
+document.querySelectorAll('[data-download-recovery]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const blob = new Blob([`${button.dataset.downloadRecovery || ''}\n`], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'isnomcms-recovery-codes.txt';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+});
+
 function wrapSelection(textarea, before, after) {
   const start = textarea.selectionStart || 0;
   const end = textarea.selectionEnd || 0;
