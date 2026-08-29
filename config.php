@@ -7,6 +7,7 @@ $turnstileHostnames = env_value(
 $webauthnOrigins = env_value('WEBAUTHN_ORIGINS', env_value('APP_URL', 'https://jeftezmont.me'));
 
 return [
+    'app_version' => '1.0',
     'app_env' => env_value('APP_ENV', 'production'),
     'app_url' => rtrim(env_value('APP_URL', 'https://jeftezmont.me'), '/'),
     'app_key' => env_value('APP_KEY', ''),

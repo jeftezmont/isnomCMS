@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('favicon/favicon-16x16.png') ?>">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
-    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=34">
+    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=35">
     <?php
     try {
         $themeSettings = (new \App\Models\Setting(\App\Core\Database::connect($config)))->all();
@@ -81,7 +81,12 @@
     </aside>
     <main class="admin-main">
         <header class="admin-top"><span>/admin</span><strong><?= e($title ?? '') ?></strong></header>
-        <?= $content ?>
+        <div class="admin-content">
+            <?= $content ?>
+        </div>
+        <footer class="admin-footer">
+            <span>isnomCMS</span><span aria-hidden="true">•</span><span>Versión <?= e((string) ($config['app_version'] ?? '1.0')) ?></span><span aria-hidden="true">•</span><span>Josué 1:9</span>
+        </footer>
     </main>
 </body>
 </html>
