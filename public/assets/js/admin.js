@@ -286,6 +286,41 @@ document.querySelectorAll('[data-podcast-episode-form]').forEach((form) => {
   });
 });
 
+document.querySelectorAll('[data-roles-matrix]').forEach((matrix) => {
+  const save = matrix.querySelector('[data-role-save]');
+  const activeLabel = matrix.querySelector('[data-active-role-label]');
+
+  const selectRole = (role, label) => {
+    if (!role || !document.getElementById(`role-form-${role}`)) return;
+    matrix.dataset.activeRole = role;
+    matrix.querySelectorAll('[data-role-column]').forEach((column) => {
+      column.classList.toggle('is-selected', column.dataset.roleColumn === role);
+    });
+    if (save) save.setAttribute('form', `role-form-${role}`);
+    if (activeLabel) activeLabel.textContent = label || role;
+  };
+
+  matrix.querySelectorAll('[data-select-role]').forEach((button) => {
+    button.addEventListener('click', () => selectRole(button.dataset.selectRole, button.dataset.roleName));
+  });
+
+  matrix.querySelectorAll('[data-role-permission]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const header = matrix.querySelector(`[data-select-role="${input.dataset.rolePermission}"]`);
+      selectRole(input.dataset.rolePermission, header ? header.dataset.roleName : input.dataset.rolePermission);
+    });
+  });
+
+  const setAll = (checked) => {
+    const role = matrix.dataset.activeRole;
+    matrix.querySelectorAll(`[data-role-permission="${role}"]`).forEach((input) => { input.checked = checked; });
+  };
+  const checkAll = matrix.querySelector('[data-role-check-all]');
+  const clearAll = matrix.querySelector('[data-role-clear-all]');
+  if (checkAll) checkAll.addEventListener('click', () => setAll(true));
+  if (clearAll) clearAll.addEventListener('click', () => setAll(false));
+});
+
 const passkeySupported = window.PublicKeyCredential && navigator.credentials;
 
 function base64UrlToBuffer(value) {

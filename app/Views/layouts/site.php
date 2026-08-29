@@ -18,7 +18,7 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
     <?php if (!empty($blogFeedUrl)): ?><link rel="alternate" type="application/rss+xml" title="<?= e(($config['site']['name'] ?? 'isnomCMS') . ' — Blog') ?>" href="<?= e($blogFeedUrl) ?>"><?php endif; ?>
-    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=33">
+    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=34">
     <script defer src="<?= asset('js/site.js') ?>?v=4"></script>
     <?php
     try {

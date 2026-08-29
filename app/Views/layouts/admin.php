@@ -1,29 +1,3 @@
-<?php
-function admin_icon(string $name): string
-{
-    $icons = [
-        'house' => '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10.5 12 3l9 7.5"/><path d="M5 8.8V21h14V8.8"/>',
-        'file-text' => '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M8 9h2"/>',
-        'plus' => '<path d="M12 5v14"/><path d="M5 12h14"/>',
-        'folder' => '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.8a2 2 0 0 1-1.6-.8L9.4 3.8A2 2 0 0 0 7.8 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
-        'tag' => '<path d="M12 2H2v10l9.3 9.3a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><path d="M7 7h.01"/>',
-        'image' => '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
-        'mic' => '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
-        'list-audio' => '<path d="M11 6h10"/><path d="M11 12h10"/><path d="M11 18h10"/><path d="M4 17v-6"/><circle cx="4" cy="19" r="2"/>',
-        'user' => '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
-        'key-round' => '<path d="M2 18v3h3l8.7-8.7"/><circle cx="16" cy="8" r="6"/><path d="M19.5 4.5 18 6"/><path d="m15 9 3-3"/>',
-        'shield' => '<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3Z"/><path d="m9 12 2 2 4-4"/>',
-        'settings' => '<path d="M12.2 2h-.4a2 2 0 0 0-2 1.7l-.2 1.2a7.8 7.8 0 0 0-1.6.9L6.9 5.3a2 2 0 0 0-2.6.8l-.2.4a2 2 0 0 0 .4 2.7l.9.8a8 8 0 0 0 0 1.9l-.9.8a2 2 0 0 0-.4 2.7l.2.4a2 2 0 0 0 2.6.8l1.1-.5a7.8 7.8 0 0 0 1.6.9l.2 1.2a2 2 0 0 0 2 1.7h.4a2 2 0 0 0 2-1.7l.2-1.2a7.8 7.8 0 0 0 1.6-.9l1.1.5a2 2 0 0 0 2.6-.8l.2-.4a2 2 0 0 0-.4-2.7l-.9-.8a8 8 0 0 0 0-1.9l.9-.8a2 2 0 0 0 .4-2.7l-.2-.4a2 2 0 0 0-2.6-.8l-1.1.5a7.8 7.8 0 0 0-1.6-.9l-.2-1.2a2 2 0 0 0-2-1.7Z"/><circle cx="12" cy="12" r="3"/>',
-        'archive' => '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',
-        'rocket' => '<path d="M4.5 16.5c-1.2 1-1.7 2.6-1.5 4.5 1.9.2 3.5-.3 4.5-1.5"/><path d="M9 15 4 20"/><path d="M15 9l-6 6"/><path d="M14 3c3.5.2 5.8 1.2 7 3-1.8 4.8-4.8 8.1-9 10l-5-5c1.9-4.2 5.2-7.2 10-9Z"/><path d="M14 3c-.4 2 .1 3.8 1.5 5.2S18.7 10.1 21 9"/><circle cx="15" cy="9" r="1"/>',
-        'activity' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
-        'wrench' => '<path d="M14.7 6.3a4 4 0 0 0-5-5L7 4l3 3 2.7-2.7a4 4 0 0 0 2 5L6.3 17.7a2 2 0 0 0 0 2.8l.2.2a2 2 0 0 0 2.8 0l8.4-8.4a4 4 0 0 0 5-2l-3 3-3-3 3-3a4 4 0 0 0-5-1Z"/>',
-        'log-out' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
-    ];
-    $paths = $icons[$name] ?? '';
-    return '<span class="admin-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' . $paths . '</svg></span>';
-}
-?>
 <!doctype html>
 <html lang="es">
 <head>
@@ -34,7 +8,7 @@ function admin_icon(string $name): string
     <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('favicon/favicon-16x16.png') ?>">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('favicon/apple-touch-icon.png') ?>">
-    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=33">
+    <link rel="stylesheet" href="<?= asset('css/site.css') ?>?v=34">
     <?php
     try {
         $themeSettings = (new \App\Models\Setting(\App\Core\Database::connect($config)))->all();
@@ -51,7 +25,7 @@ function admin_icon(string $name): string
     </style>
     <?php endif; ?>
     <script defer src="<?= asset('vendor/qrcode-generator/qrcode.js') ?>"></script>
-    <script defer src="<?= asset('js/admin.js') ?>?v=32"></script>
+    <script defer src="<?= asset('js/admin.js') ?>?v=33"></script>
 </head>
 <body class="admin-shell">
     <aside class="admin-nav">
