@@ -15,3 +15,10 @@ public/uploads/*
 *.log
 *.sql.bak
 .DS_Store
+
+# Exportacion de datos de Codex (contiene datos del propietario)
+cms-export/
+
+# Instrucciones locales para agentes (no van a GitHub)
+AGENTS.md
+CLAUDE.md
